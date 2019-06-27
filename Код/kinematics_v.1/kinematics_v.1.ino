@@ -19,25 +19,26 @@
 #define ACCELERATION 10000000
 #define MAX_SPEED 1000
 
-#define ONE_STEP  0.1 // в одном шаге 1мм (вроде так)
+#define ONE_STEP  0.1 // в одном шаге 0.1мм
 
-int R = 405;  //мм, длина штанги
-int R_2 = R*R;
+#define R 405  //мм, длина ножки
+long R_2 = long(R)*long(R);
 
-int L = 1000; //мм, длина принтера (меньше чем на самом деле)
+#define L 1000 //мм, длина принтера (меньше чем на самом деле)
 
-float r = 70;   //мм, расстояние между штангами
+#define r 70   //мм, расстояние между ножками (на верхней платформе)
 float r_sqrt_2 = r/sqrt(2);
 
-int l = 230;  // мм ширина принтера
-int h = 70; // мм, высота головки
+#define T_WEIGHT_HALF 115 // мм половина ширины принтера
+
+#define EXT_HEIGHT 70 // мм, высота головки (над верхней платформой)
 
 struct Carriages {
-  int car_x, car_y, car_z, car_e; // абсолютные координаты кареток (в каких еденицах?)
+  int car_x, car_y, car_z, car_e; // абсолютные координаты кареток в мм
 };
 
 struct Position {
-  int X, Y, Z;  // абсолютные координаты сопла    
+  int X, Y, Z;  // абсолютные координаты сопла в мм   
 };
 
 Carriages cars;
@@ -62,43 +63,56 @@ void init_stepper(AccelStepper& stepper, const uint8_t& pin, const int& pos)
 
 void set_new_pos(Carriages& cars, const Position& new_pos)
 {
-  int common_part = R_2 - (new_pos.Z - h)*(new_pos.Z - h);
-  float dY_0 = -l - (new_pos.Y-r_sqrt_2);
-  float dY_1 = l - (new_pos.Y+r_sqrt_2);
+  long common_part = R_2 - long(new_pos.Z - EXT_HEIGHT)*long(new_pos.Z - EXT_HEIGHT);
+  float dY_0 = -T_WEIGHT_HALF - (new_pos.Y-r_sqrt_2);
+  float dY_1 = T_WEIGHT_HALF - (new_pos.Y+r_sqrt_2);
 
   float under_root_0 = common_part - (dY_0)*(dY_0);
   float under_root_1 = common_part - (dY_1)*(dY_1);
   
-  if (under_root_0 > 0 && under_root_1 > 0)
+  if (under_root_0 >= 0 && under_root_1 >= 0)
   {
     int delta_0 = r_sqrt_2 + sqrt(under_root_0);
-    int delta_l = r_sqrt_2 + sqrt(under_root_1); //(в каких еденицах?)
+    int delta_l = r_sqrt_2 + sqrt(under_root_1); // в миллиметрах
     
     cars.car_x = new_pos.X - delta_0;
     cars.car_y = new_pos.X + delta_0;
-    cars.car_z = new_pos.X - delta_l;
-    cars.car_e = new_pos.X + delta_l;
+    cars.car_z = new_pos.X + delta_l;
+    cars.car_e = new_pos.X - delta_l;
+  }
+  else
+  {
+    Serial.println("Wrong Destination");
   }
 }
 
 void setup() {
   Serial.begin(9600);
   init_stepper(stepper_x, X_ENABLE_PIN, 0);
-  init_stepper(stepper_y, Y_ENABLE_PIN, 170/ONE_STEP);
-  init_stepper(stepper_z, Z_ENABLE_PIN, -170/ONE_STEP); // 1)проверить все начальные положения
+  init_stepper(stepper_y, Y_ENABLE_PIN, 140/ONE_STEP);
+  init_stepper(stepper_z, Z_ENABLE_PIN, -140/ONE_STEP); 
   init_stepper(stepper_e, E_ENABLE_PIN, 0);
 }
 
-void loop() {
-  head_pos = {0, 0, 200};
+const Position plan[] = {{70, 0, 430},{110,0,430},{142,25,430},{170,50,430},{170,-50,430},{143,-25,430},{110,0,430},{210,0,430},{219,12,430},{230,25,430},{230,-25, 430},{219,-12,430},{210, 0, 430}};
 
+
+void loop() {
+
+  for(int i = 0; i < 13; i++){
+  
+  head_pos = plan[i];
+  
   set_new_pos(cars, head_pos);
   
   stepper_x.moveTo(-cars.car_x / ONE_STEP);
   stepper_y.moveTo(cars.car_y / ONE_STEP);
-  stepper_z.moveTo(-cars.car_z / ONE_STEP); // 2) проверить знаки
+  stepper_z.moveTo(-cars.car_z / ONE_STEP); 
   stepper_e.moveTo(cars.car_e / ONE_STEP);
-          
+  Serial.println(cars.car_x);
+  Serial.println(cars.car_y);
+  Serial.println(cars.car_z);
+  Serial.println(cars.car_e);
   while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
       {
         stepper_x.run();
@@ -107,4 +121,5 @@ void loop() {
         stepper_e.run();
      }
   delay(1000);
+  }
 }
