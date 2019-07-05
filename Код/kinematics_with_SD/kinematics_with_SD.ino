@@ -35,7 +35,7 @@ float r_sqrt_2 = r/sqrt(2);
 #define EXT_HEIGHT 70 // мм, высота головки (над верхней платформой)
 
 struct Carriages {
-  int car_x, car_y, car_z, car_e; // абсолютные координаты кареток в мм
+  float car_x, car_y, car_z, car_e; // абсолютные координаты кареток в мм
 };
 
 struct Position {
@@ -66,22 +66,27 @@ void init_stepper(AccelStepper& stepper, const uint8_t& pin, const int& pos)
 
 void set_new_pos(Carriages& cars, const Position& new_pos)
 {
-  long common_part = R_2 - long(new_pos.Z - EXT_HEIGHT)*long(new_pos.Z - EXT_HEIGHT);
+  float common_part = R_2 - (new_pos.Z - EXT_HEIGHT)*(new_pos.Z - EXT_HEIGHT);
   float dY_0 = -T_WEIGHT_HALF - (new_pos.Y-r_sqrt_2);
   float dY_1 = T_WEIGHT_HALF - (new_pos.Y+r_sqrt_2);
 
   float under_root_0 = common_part - (dY_0)*(dY_0);
   float under_root_1 = common_part - (dY_1)*(dY_1);
-  
+  //Serial.println(under_root_0,3);
+  //Serial.println(under_root_1,3);
   if (under_root_0 >= 0 && under_root_1 >= 0)
   {
-    int delta_0 = r_sqrt_2 + sqrt(under_root_0);
-    int delta_l = r_sqrt_2 + sqrt(under_root_1); // в миллиметрах
+    float delta_0 = r_sqrt_2 + sqrt(under_root_0);
+    float delta_l = r_sqrt_2 + sqrt(under_root_1); // в миллиметрах
     
     cars.car_x = new_pos.X - delta_0;
     cars.car_y = new_pos.X + delta_0;
     cars.car_z = new_pos.X + delta_l;
     cars.car_e = new_pos.X - delta_l;
+    //Serial.println(cars.car_x,3);
+    //Serial.println(cars.car_y,3);
+    //Serial.println(cars.car_z,3);
+    //Serial.println(cars.car_e,3);
   }
   else
   {
@@ -91,21 +96,21 @@ void set_new_pos(Carriages& cars, const Position& new_pos)
 
 void setup() {
   Serial.begin(9600);
-  
+  SD.begin();
   init_stepper(stepper_x, X_ENABLE_PIN, 0);
   init_stepper(stepper_y, Y_ENABLE_PIN, 140/ONE_STEP);
   init_stepper(stepper_z, Z_ENABLE_PIN, -140/ONE_STEP); 
   init_stepper(stepper_e, E_ENABLE_PIN, 0);
 }
 
-const Position plan[] = {{70, 0, 430},{110,0,430},{142,25,430},{170,50,430},{170,-50,430},{143,-25,430},{110,0,430},{210,0,430},{219,12,430},{230,25,430},{230,-25, 430},{219,-12,430},{210, 0, 430}};
+//const Position plan[] = {{70, 0, 430},{110,0,430},{142,25,430},{170,50,430},{170,-50,430},{143,-25,430},{110,0,430},{210,0,430},{219,12,430},{230,25,430},{230,-25, 430},{219,-12,430},{210, 0, 430}};
 
 
 void loop() {
-
-  trajectory = SD.open("file.txt"); // название файла с траекторией
+  trajectory = SD.open("CYTS0001.txt"); // название файла с траекторией
   if (trajectory) 
   {
+    Serial.println("Open success");
     while (trajectory.available()) 
     { 
       float X, Y, Z;
@@ -116,15 +121,12 @@ void loop() {
       head_pos = {X,Y,Z}; 
       
       set_new_pos(cars, head_pos);
-  
-      stepper_x.moveTo(-cars.car_x / ONE_STEP);
-      stepper_y.moveTo(cars.car_y / ONE_STEP);
-      stepper_z.moveTo(-cars.car_z / ONE_STEP); 
-      stepper_e.moveTo(cars.car_e / ONE_STEP);
-      Serial.println(cars.car_x);
-      Serial.println(cars.car_y);
-      Serial.println(cars.car_z);
-      Serial.println(cars.car_e);
+      
+      stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
+      stepper_y.moveTo(round(cars.car_y / ONE_STEP));
+      stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
+      stepper_e.moveTo(round(cars.car_e / ONE_STEP)); 
+      
       while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
           {
             stepper_x.run();
@@ -135,5 +137,8 @@ void loop() {
       }
       trajectory.close();
     }
-   delay(1000);
+    else
+    {
+      Serial.println("Cannot open file");
+    }
 }
