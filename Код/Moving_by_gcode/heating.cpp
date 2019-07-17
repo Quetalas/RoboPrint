@@ -19,8 +19,6 @@ float get_temprature()
 	ur = ur/coef;
 	ur = ur + 1.0/(NOMINAL_T + 273.15); 
 	temp = 1.0/ur - 273.15;
-	Serial.print("Current tmp ");
-	Serial.println(temp);
 	return temp;
 }
 
@@ -29,7 +27,7 @@ void run_print()
 	int pwm;
 	float temp = get_temprature();
 
-    if (temp < 210)
+  if (temp < 210)
 	{
 	  analogWrite(HEATER_PIN, 255);
 	  Serial.println(temp);
@@ -43,6 +41,7 @@ void run_print()
 	  stepper_extr.runSpeed();
 	  pwm = -17.0*temp+3825;
 	  analogWrite(HEATER_PIN, pwm);
+	  Serial.print("Temprature: ");
 	  Serial.println(temp);
 	}  
 }

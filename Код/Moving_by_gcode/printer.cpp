@@ -67,7 +67,7 @@ void move_to(float& X, float& Y, float& Z, float& E)
 
   if (fabs(current_pos.Z - 430) < Z)
   {
-  	current_pos.Z -= Z;
+  	current_pos.Z -= 0.1;
   	move_down();
   }
   
@@ -81,7 +81,7 @@ void move_to(float& X, float& Y, float& Z, float& E)
     do_print = false;
     stepper_extr.stop(); 
     stepper_extr.setCurrentPosition(0);
-    stepper_extr.moveTo(2.0/EXTR_STEP);
+    stepper_extr.moveTo(1.0/EXTR_STEP);
       
     while (stepper_extr.distanceToGo() != 0)
     {
