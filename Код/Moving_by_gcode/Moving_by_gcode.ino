@@ -15,15 +15,17 @@ AccelStepper stepper_z(AccelStepper::DRIVER, Z_STEP_PIN, Z_DIR_PIN);
 AccelStepper stepper_e(AccelStepper::DRIVER, E_STEP_PIN, E_DIR_PIN);
 AccelStepper stepper_extr(AccelStepper::DRIVER, E1_STEP_PIN, E1_DIR_PIN);
 
+#define CARS_POINTS_DISTANCE 300
+
 void setup()
 {
   Serial.begin(9600);
   SD.begin();
   //pinMode(SS, OUTPUT);
-  init_stepper(stepper_x, X_ENABLE_PIN, 0);
-  init_stepper(stepper_y, Y_ENABLE_PIN, 345/ONE_STEP);
-  init_stepper(stepper_z, Z_ENABLE_PIN, -345/ONE_STEP); 
-  init_stepper(stepper_e, E_ENABLE_PIN, 0);
+  init_stepper(stepper_x, X_ENABLE_PIN, -(CARS_POINTS_DISTANCE / 2) / ONE_STEP);
+  init_stepper(stepper_y, Y_ENABLE_PIN, (CARS_POINTS_DISTANCE / 2) / ONE_STEP);
+  init_stepper(stepper_z, Z_ENABLE_PIN, -(CARS_POINTS_DISTANCE / 2) / ONE_STEP); 
+  init_stepper(stepper_e, E_ENABLE_PIN, (CARS_POINTS_DISTANCE / 2) / ONE_STEP);
   init_stepper(stepper_extr, E1_ENABLE_PIN, 0);
 
   extr_init();
@@ -34,7 +36,7 @@ String file_name = "jent.txt";
 
 void loop()
 {
-  current_pos = {30,0,450};
+  current_pos = {0,0,450};
   set_new_pos(cars, current_pos);
   stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
   stepper_y.moveTo(round(cars.car_y / ONE_STEP));
