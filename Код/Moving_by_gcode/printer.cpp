@@ -44,6 +44,22 @@ void set_new_pos(Carriages& cars, const Position& new_pos)
   }
 }
 
+void go(Carriages& cars, const Position& new_pos)
+{
+  set_new_pos(cars, new_pos);
+  stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
+  stepper_y.moveTo(round(cars.car_y / ONE_STEP));
+  stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
+  stepper_e.moveTo(round(cars.car_e / ONE_STEP));
+  while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
+  {
+    stepper_x.run();
+    stepper_y.run();
+    stepper_z.run();
+    stepper_e.run();
+  }
+}
+
 #define STEP_X 0.1
 
 void move_to(float& X, float& Y, float& Z, float& E)
@@ -96,50 +112,18 @@ void move_to(float& X, float& Y, float& Z, float& E)
        current_pos.X -= STEP_X; 
        current_pos.Y -= STEP_Y; 
       }
-      set_new_pos(cars, current_pos);
-      stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
-      stepper_y.moveTo(round(cars.car_y / ONE_STEP));
-      stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
-      stepper_e.moveTo(round(cars.car_e / ONE_STEP));
-      while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
-      {
-        stepper_x.run();
-        stepper_y.run();
-        stepper_z.run();
-        stepper_e.run();
-      }
+      go(cars, current_pos);
     }
   }
   else
   {
     current_pos.Y = Y;
-    set_new_pos(cars, current_pos);
-    stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
-    stepper_y.moveTo(round(cars.car_y / ONE_STEP));
-    stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
-    stepper_e.moveTo(round(cars.car_e / ONE_STEP));
-    while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
-    {
-      stepper_x.run();
-      stepper_y.run();
-      stepper_z.run();
-      stepper_e.run();
-    }
+    go(cars, current_pos);
   }
 }
 
 void move_down()
 {
-	set_new_pos(cars, current_pos);
-    stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
-    stepper_y.moveTo(round(cars.car_y / ONE_STEP));
-    stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
-    stepper_e.moveTo(round(cars.car_e / ONE_STEP));
-    while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
-    {
-      stepper_x.run();
-      stepper_y.run();
-      stepper_z.run();
-      stepper_e.run();
-    }
+  go(cars, current_pos);
 }
+

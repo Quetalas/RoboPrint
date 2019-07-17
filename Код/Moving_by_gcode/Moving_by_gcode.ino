@@ -37,18 +37,7 @@ String file_name = "jent.txt";
 void loop()
 {
   current_pos = {0,0,450};
-  set_new_pos(cars, current_pos);
-  stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
-  stepper_y.moveTo(round(cars.car_y / ONE_STEP));
-  stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
-  stepper_e.moveTo(round(cars.car_e / ONE_STEP));
-  while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
-  {
-    stepper_x.run();
-    stepper_y.run();
-    stepper_z.run();
-    stepper_e.run();
-  }
+  go(cars, current_pos);
   
   gcode = SD.open(file_name);
   if (gcode)

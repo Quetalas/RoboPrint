@@ -46,6 +46,8 @@ void init_stepper(AccelStepper& stepper, const uint8_t& pin, const int& pos);
 
 void set_new_pos(Carriages& cars, const Position& new_pos);
 
+void go(Carriages& cars, const Position& new_pos);
+
 extern Carriages cars;
 extern Position current_pos;
 extern AccelStepper stepper_x;
