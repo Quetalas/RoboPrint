@@ -2,6 +2,13 @@
 
 bool do_print = false;
 
+void extr_init()
+{
+	pinMode(T_SENSOR_PIN, INPUT);
+  pinMode(HEATER_PIN, OUTPUT);
+  analogWrite(HEATER_PIN, 0);
+}
+
 float get_temprature()
 {
 	float temp, ur, Rth, Vo;

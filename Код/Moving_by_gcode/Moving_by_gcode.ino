@@ -1,5 +1,6 @@
 #include <AccelStepper.h>
 #include <SD.h>
+
 #include "printer.h"
 #include "gparser.h"
 #include "heating.h"
@@ -14,20 +15,20 @@ AccelStepper stepper_z(AccelStepper::DRIVER, Z_STEP_PIN, Z_DIR_PIN);
 AccelStepper stepper_e(AccelStepper::DRIVER, E_STEP_PIN, E_DIR_PIN);
 AccelStepper stepper_extr(AccelStepper::DRIVER, E1_STEP_PIN, E1_DIR_PIN);
 
+#define CARS_POINTS_DISTANCE 300
+
 void setup()
 {
   Serial.begin(9600);
   SD.begin();
   //pinMode(SS, OUTPUT);
-  init_stepper(stepper_x, X_ENABLE_PIN, 0);
-  init_stepper(stepper_y, Y_ENABLE_PIN, 345/ONE_STEP);
-  init_stepper(stepper_z, Z_ENABLE_PIN, -345/ONE_STEP); 
-  init_stepper(stepper_e, E_ENABLE_PIN, 0);
+  init_stepper(stepper_x, X_ENABLE_PIN, -(CARS_POINTS_DISTANCE / 2) / ONE_STEP);
+  init_stepper(stepper_y, Y_ENABLE_PIN, (CARS_POINTS_DISTANCE / 2) / ONE_STEP);
+  init_stepper(stepper_z, Z_ENABLE_PIN, -(CARS_POINTS_DISTANCE / 2) / ONE_STEP); 
+  init_stepper(stepper_e, E_ENABLE_PIN, (CARS_POINTS_DISTANCE / 2) / ONE_STEP);
   init_stepper(stepper_extr, E1_ENABLE_PIN, 0);
 
-  pinMode(T_SENSOR_PIN, INPUT);
-  pinMode(HEATER_PIN, OUTPUT);
-  analogWrite(HEATER_PIN, 0);
+  extr_init();
 }
 
 File gcode;
@@ -35,27 +36,8 @@ String file_name = "jent.txt";
 
 void loop()
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
   current_pos = {0,0,450};
   go(cars, current_pos);
-=======
-=======
->>>>>>> parent of 05417c6... correct start
-  current_pos = {30,0,450};
-  set_new_pos(cars, current_pos);
-  stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
-  stepper_y.moveTo(round(cars.car_y / ONE_STEP));
-  stepper_z.moveTo(round(-cars.car_z / ONE_STEP)); 
-  stepper_e.moveTo(round(cars.car_e / ONE_STEP));
-  while ( (stepper_x.distanceToGo() != 0) || (stepper_y.distanceToGo() != 0) || (stepper_z.distanceToGo() != 0) || (stepper_e.distanceToGo() != 0) )
-  {
-    stepper_x.run();
-    stepper_y.run();
-    stepper_z.run();
-    stepper_e.run();
-  }
->>>>>>> parent of 05417c6... correct start
   
   gcode = SD.open(file_name);
   if (gcode)
