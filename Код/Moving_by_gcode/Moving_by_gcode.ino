@@ -36,9 +36,12 @@ String file_name = "jent.txt";
 void loop()
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
   current_pos = {0,0,450};
   go(cars, current_pos);
 =======
+=======
+>>>>>>> parent of 05417c6... correct start
   current_pos = {30,0,450};
   set_new_pos(cars, current_pos);
   stepper_x.moveTo(round(-cars.car_x / ONE_STEP));  //int vs round
