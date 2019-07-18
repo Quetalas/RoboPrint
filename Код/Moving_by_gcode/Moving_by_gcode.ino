@@ -1,6 +1,5 @@
 #include <AccelStepper.h>
 #include <SD.h>
-
 #include "printer.h"
 #include "gparser.h"
 #include "heating.h"
@@ -28,7 +27,9 @@ void setup()
   init_stepper(stepper_e, E_ENABLE_PIN, (CARS_POINTS_DISTANCE / 2) / ONE_STEP);
   init_stepper(stepper_extr, E1_ENABLE_PIN, 0);
 
-  extr_init();
+  pinMode(T_SENSOR_PIN, INPUT);
+  pinMode(HEATER_PIN, OUTPUT);
+  analogWrite(HEATER_PIN, 0);
 }
 
 File gcode;

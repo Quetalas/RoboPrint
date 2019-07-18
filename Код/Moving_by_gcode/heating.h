@@ -18,10 +18,6 @@ extern AccelStepper stepper_extr;
 
 extern bool do_print;
 
-void extr_init();
-
 float get_temprature();
-
 void run_print();
-
 void heating();
