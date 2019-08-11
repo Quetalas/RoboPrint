@@ -1,4 +1,3 @@
-#include <AccelStepper.h>
 #include "heating.h"
 #include "connection.h"
 #include "moving_stepper.h"
@@ -12,27 +11,19 @@ void setup() {
   init_stepper(stepper_y, Y_ENABLE_PIN, round(290/ONE_STEP), false);
   init_stepper(stepper_z, Z_ENABLE_PIN, round(290/ONE_STEP), true);
   init_stepper(stepper_e, E_ENABLE_PIN, round(-290 / ONE_STEP), false);
-  //add extruder
-
-  
 }
 
 void loop() {
-  String cmd;
-  if (Connection::read_pack()) {
-    uint16_t pack_size = Connection::packLen();
-    if(pack_size > 0) {
-      cmd = Connection::getNextData();
-    }
-    switch(cmd.toInt()) {
+  Connection::listen();
+  if(Connection::packLen() > 0) {
+    switch(Connection::getNextData().toInt()) {
       case G0:
-          //Connection::send_pack(Connection::getDataPack());
           moving_gcode();
-          Connection::send_pack("end");
+          Connection::send_pack("0");
           break;
       case G1:
           moving_gcode();
-          Connection::send_pack("end");
+          Connection::send_pack("0");
           break;
       case ECHO:
           Connection::send_pack(Connection::getDataPack());
@@ -42,12 +33,15 @@ void loop() {
           break;
       case SET_TEMP:
           target_temp = Connection::getNextData().toFloat();
+          Connection::send_pack("0");
           break;
       case HEAT:
           heating(target_temp);
+          Connection::send_pack("0");
           break;
       case FREEZE:
           freeze();
+          Connection::send_pack("0");
           break;
     }
   }

@@ -1,18 +1,34 @@
-from connections import Arduino, commands
+from connections import Commands
+import random
+
+
+
+def random_echo(arduino):
+
+    msg = [Commands['echo']]
+    msg2 = [random.randint(0, 10000)] * random.randint(1, 12)
+    msg = msg + msg2
+    arduino.send(*msg)
+
+    tmp = arduino.get()
+    while not tmp:
+        tmp = arduino.get()
+
+    return msg, tmp
 
 def listen_heat(arduino):
     tmp = ''
     while tmp != ['Complete']:
-        tmp = arduino.read()
+        tmp = arduino.get()
         if tmp:
             print(tmp)
     tmp = ''
     while tmp != 's':
         for i in range(50):
-            arduino.send(commands['get_temp'])
-            tmp = arduino.read()
+            arduino.send(Commands['get_temp'])
+            tmp = arduino.get()
             while not tmp:
-                tmp = arduino.read()
+                tmp = arduino.get()
                 if tmp:
                     print(tmp)
         tmp = input()
@@ -28,22 +44,15 @@ def interactive_connection(arduino):
         cmd = line_parts[0]
         print('input', *line_parts)
         if (len(line_parts) > 1):
-            arduino.send(commands[line_parts[0]], *line_parts[1:])
+            arduino.send(Commands[line_parts[0]], *line_parts[1:])
         else:
-            arduino.send((commands[line_parts[0]]))
+            arduino.send((Commands[line_parts[0]]))
         if cmd == 'heat':
             listen_heat(arduino)
         else:
             tmp = ''
             while not tmp:
-                tmp = arduino.read()
+                tmp = arduino.get()
                 if tmp:
                     print(tmp)
 
-
-
-
-
-if __name__ == '__main__':
-    mega = Arduino("COM8")
-    interactive_connection(mega)

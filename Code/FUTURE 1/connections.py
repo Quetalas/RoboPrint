@@ -27,7 +27,6 @@ class Connection(serial.serialwin32.Serial):
             data_pack = str(d) + self.DIVIDER if i < (len(args) - 1) else str(d)
             while self.out_waiting > 10:
                 pass
-
             self.write(bytes(data_pack.encode('ascii')))
 
         self.write(self.ENDING)
