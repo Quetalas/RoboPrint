@@ -1,0 +1,10 @@
+connections.py:
+1) Наследование от Serial
+2) Хранение символов в байт коде
+
+moving.py:
+1) Возвращает из yield
+2) Переименован в printer.py
+
+main.py:
+1)
