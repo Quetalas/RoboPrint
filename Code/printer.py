@@ -71,7 +71,7 @@ class Tower:
         :return:
         """
 
-        self.vel = command['F'] / 60 / 4 if command.get('F') is not None else self.vel
+        self.vel = command['F'] / 60 if command.get('F') is not None else self.vel
 
         _, _, Z = self.pos_from_cars(car_x=-290, car_y=290, car_z=290, car_e=-290)
         # деление отрезка из считанной строки на интервалы
@@ -101,8 +101,11 @@ class Tower:
         ext_micro_step = 0
 
         if command['cmd'] == 'G1':
-            ext_micro_step = (command['E'] - self.ext_pos) / num_del
-            self.v_ext = ext_micro_step / time_for_step
+            if command.get('E') is None:
+                ext_micro_step = 0
+            else:
+                ext_micro_step = (command['E'] - self.ext_pos) / num_del
+                self.vel_ext = ext_micro_step / time_for_step
 
         for i in range(num_del):
 
@@ -137,7 +140,7 @@ class Tower:
             if command['cmd'] == 'G1':
                 data_pack = (Commands['g1'], car2_x, car2_y, car2_z, car2_e,
                              car_speed_x, car_speed_y, car_speed_z, car_speed_e,
-                             round(ext_target / self._ONE_STEP), round(math.fabs(self.v_ext / self._ONE_STEP), 2))
+                             round(ext_target / self._ONE_STEP), round(math.fabs(self.vel_ext / self._ONE_STEP), 2))
 
             elif command['cmd'] == 'G0':
                 data_pack = (Commands['g0'], car2_x, car2_y, car2_z, car2_e,

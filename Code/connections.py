@@ -1,59 +1,52 @@
 import serial
-import time
 
-class Arduino:
+Commands = {'g0': 0, 'g1': 1, 'echo': 2, 'get_temp': 3, 'set_temp': 4, 'heat': 5, 'freeze': 6}
 
-    BAUD_RATE = 9600
-    received_data = []
-    DIVIDER = ','
-    STARTING = '{'
-    ENDING = '}'
+
+class Connection(serial.serialwin32.Serial):
 
     def __init__(self, port):
-        self.connection = serial.Serial(port, self.BAUD_RATE)   # Блокирующее считывание нужно методу read
 
-        if self.connection.is_open:
-            self.connection.close()
-        self.connection.open()
-        time.sleep(2)
-        print("Connection complete")
+        self.BAUD_RATE = 115200
+        super().__init__(port, self.BAUD_RATE)  # Блокирующее считывание нужно методу get
+
+        self.DIVIDER = ','
+        self.STARTING = bytes('{'.encode('ascii'))
+        self.ENDING = bytes('}'.encode('ascii'))
+
+        self.received_data = []
 
     def send(self, *args):
 
-        if len(args) == 0:
+        if len(args) == 0:  # Незачем тратить время на отправку пустых данных
             return False
 
-        data_pack = self.STARTING
+        self.write(self.STARTING)
         for i, d in enumerate(args):
-            if i == len(args) - 1:
-                data_pack += str(d) + self.ENDING
-            else:
-                data_pack += str(d) + ","
-            while self.connection.out_waiting > min(2 * len(data_pack), 64):
+
+            data_pack = str(d) + self.DIVIDER if i < (len(args) - 1) else str(d)
+            while self.out_waiting > 10:
                 pass
-            self.connection.write(bytes(data_pack.encode('ascii')))
-            data_pack = ""
+            self.write(bytes(data_pack.encode('ascii')))
+
+        self.write(self.ENDING)
 
         return True
 
-    def read(self):
+    def get(self):  # Сделать блокирующим
         """
         Если данные пришли, то начинает считывание со стартового байта,
         читает до тех пор, пока не получит байт конца данных.
         Использует байт-разделитель, чтобы получить массив данных из строки.
         :return:
         """
-
-        self.received_data = []
-        num_input_bytes = self.connection.in_waiting
-        if num_input_bytes > 0:
-            for i in range(num_input_bytes):
-
-                next_byte = self.connection.read(1)
-                next_byte = str(next_byte, encoding='ascii')
+        self.received_data.clear()
+        if self.in_waiting > 0:
+            for i in range(self.in_waiting):
+                next_byte = self.read(1)
 
                 if next_byte == self.STARTING:
-                    data = self.connection.read_until(bytes(self.ENDING.encode('ascii')))
+                    data = self.read_until(self.ENDING)
                     data = str(data, encoding='ascii')
                     data = data[:-1]
                     self.received_data = data.split(self.DIVIDER)
@@ -61,18 +54,3 @@ class Arduino:
 
         return self.received_data   # [] если нет стартового символа
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__del__()
-
-    def __del__(self):
-        self.connection.close()
-
-
-commands = {'g0': 0,
-            'g1': 1,
-            'echo': 2,
-            'get_temp': 3,
-            'set_temp': 4,
-            'heat': 5,
-            'freeze': 6
-            }

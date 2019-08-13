@@ -1,20 +1,5 @@
 from connections import Commands
-import random
 
-
-
-def random_echo(arduino):
-
-    msg = [Commands['echo']]
-    msg2 = [random.randint(0, 10000)] * random.randint(1, 12)
-    msg = msg + msg2
-    arduino.send(*msg)
-
-    tmp = arduino.get()
-    while not tmp:
-        tmp = arduino.get()
-
-    return msg, tmp
 
 def listen_heat(arduino):
     tmp = ''

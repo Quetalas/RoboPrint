@@ -1,8 +1,15 @@
+/*
+ * ДЛЯ КОРРЕКТНОЙ РАБОТЫ СЛЕДУЕТ УВЕЛИЧИТЬ РАЗМЕР БУФЕРА АРДУИНО (256 - рабочий вариант)
+ * это делается в HardwareSerial.h
+ * SERIAL_RX_BUFFER_SIZE
+ * SERIAL_RX_BUFFER_SIZE
+ */
 #include "heating.h"
 #include "connection.h"
 #include "moving_stepper.h"
 
-enum commands {G0=0, G1=1, ECHO=2, GET_TEMP=3, SET_TEMP=4, HEAT=5, FREEZE=6};
+
+enum commands {G0=0, G1=1, ECHO=2, GET_TEMP=3, SET_TEMP=4, HEAT=5};
 
 void setup() {
   Connection::begin();
@@ -37,10 +44,6 @@ void loop() {
           break;
       case HEAT:
           heating(target_temp);
-          Connection::send_pack("0");
-          break;
-      case FREEZE:
-          freeze();
           Connection::send_pack("0");
           break;
     }
