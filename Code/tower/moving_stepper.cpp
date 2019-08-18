@@ -1,7 +1,6 @@
 #include <AccelStepper.h>
 #include "moving_stepper.h"
 #include "connection.h"
-#include "heating.h"
 
 AccelStepper stepper_x(AccelStepper::DRIVER, X_STEP_PIN, X_DIR_PIN);
 AccelStepper stepper_y(AccelStepper::DRIVER, Y_STEP_PIN, Y_DIR_PIN); 
@@ -34,13 +33,13 @@ void moving_gcode() {
     stepper_ext.moveTo(Connection::getNextData().toInt());
   	stepper_ext.setSpeed(Connection::getNextData().toFloat());
   }
-  HeatClass.support();
+  
   while((stepper_x.distanceToGo() != 0) || 
         (stepper_y.distanceToGo() != 0) ||
         (stepper_z.distanceToGo() != 0) || 
         (stepper_e.distanceToGo() != 0) ||
         (stepper_ext.distanceToGo() != 0)
-        ) { //нужен тут екструдер ???
+        ) {
           
     stepper_x.runSpeedToPosition();
     stepper_y.runSpeedToPosition();

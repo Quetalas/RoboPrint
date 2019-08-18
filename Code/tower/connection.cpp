@@ -8,16 +8,16 @@
  * Проблемы:
  *  -Избавиться от конкатенации строк
  *  -Перейти на char[] вместо String
- *  -Отправлять байт готовности принять данные
  */
 #include <Arduino.h>
 #include "connection.h"
+#include "temperature.h"
 
 String Connection::data_pack = "";
 uint16_t Connection::last_position = 0;
 
 void Connection::begin(const unsigned long& speed=115200) {
-  Serial.setTimeout(300000);  // 5 минут
+  Serial.setTimeout(1000);  // 1 секунда
   Serial.begin(speed);
 }
 
@@ -74,8 +74,14 @@ void Connection::listen() {
   data_pack = "";
   last_position = 0;
   while(true) {
+    if(WITH_HEATING) {
+      heater.control_temp();
+    }
     if(Serial.find('{')) {
       while(true) {
+        if(WITH_HEATING) {
+          heater.control_temp();
+        }
         if (Serial.available()) {
           next_byte = Serial.read();
           if(next_byte != '}') {

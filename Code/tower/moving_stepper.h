@@ -26,7 +26,6 @@
 
 #define ONE_STEP 0.1
 
-
 void init_stepper(AccelStepper& stepper, const uint8_t& pin, const int& pos, const bool& dirinv);
 
 void moving_gcode();
