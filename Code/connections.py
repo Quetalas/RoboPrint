@@ -1,6 +1,7 @@
 import serial
 
-Commands = {'g0': 0, 'g1': 1, 'echo': 2, 'get_temp': 3, 'set_temp': 4, 'heat': 5, 'freeze': 6}
+Commands = {'g0': 0, 'g1': 1, 'echo': 2, 'get_temp': 3, 'set_temp': 4, 'heat': 5, 'freeze': 6,
+            'M109': 7, 'M104': 8}
 
 
 class Connection(serial.serialwin32.Serial):
