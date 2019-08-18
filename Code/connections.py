@@ -34,24 +34,22 @@ class Connection(serial.serialwin32.Serial):
 
         return True
 
-    def get(self):  # Сделать блокирующим
+    def get(self):
         """
-        Если данные пришли, то начинает считывание со стартового байта,
+        Начинает считывание со стартового байта,
         читает до тех пор, пока не получит байт конца данных.
         Использует байт-разделитель, чтобы получить массив данных из строки.
         :return:
         """
         self.received_data.clear()
-        if self.in_waiting > 0:
-            for i in range(self.in_waiting):
-                next_byte = self.read(1)
 
-                if next_byte == self.STARTING:
-                    data = self.read_until(self.ENDING)
-                    data = str(data, encoding='ascii')
-                    data = data[:-1]
-                    self.received_data = data.split(self.DIVIDER)
-                    return self.received_data
+        self.read_until(self.STARTING)
+        data = self.read_until(self.ENDING)
 
-        return self.received_data   # [] если нет стартового символа
+        data = str(data, encoding='ascii')
+        data = data[:-1]
+        self.received_data = data.split(self.DIVIDER)
+
+        return self.received_data
+
 
