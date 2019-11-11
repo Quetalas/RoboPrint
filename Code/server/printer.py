@@ -4,7 +4,7 @@ from connections import Commands
 
 class Tower:
 
-    def __init__(self, car_x=-290, car_y=290, car_z=290, car_e=-290, step_length=10, std_v =40, std_v_ext=0.1):
+    def __init__(self, car_x=100, car_y=400, car_z=400, car_e=100, step_length=10, std_v=40, std_v_ext=0.1):
         """
         :param car_x:  начальная позиция каретки(шагового двигателя) в мм
         :param car_y:
@@ -17,20 +17,27 @@ class Tower:
         self._PLATFORM_PARAMETER = 70.0
         self._TABLE_WIDTH = 230.0
         self._TOWER_HEIGHT = 405.0
-        self._EXTRUDER_HEIGHT = 100.0
+        self._EXTRUDER_HEIGHT = 110.0
         self._ONE_STEP = 0.1
-        self._ONE_EXTR_STEP = 0.01
+        self._ONE_EXTR_STEP = 0.0096
         self._TH2 = self._TOWER_HEIGHT ** 2
         self._PPsqrt2 = self._PLATFORM_PARAMETER / math.sqrt(2)
 
-        x, y, z = self.pos_from_cars(car_x, car_y, car_z, car_e)    # Получаем позицию сопла
-        self.x = x
+        x, y, z = self.pos_from_cars(car_x, car_y, car_z, car_e)  # Получаем позицию сопла
+        self.START_X = x    # стартовое положение сопла
+        self.START_Y = y
+        self.START_Z = z
+        self.x = x    # текущее положение сопла
         self.y = y
         self.z = z
+        self.home_car_pos = [car_x/self._ONE_STEP, car_y/self._ONE_STEP, car_z/self._ONE_STEP, car_e/self._ONE_STEP]
+        # стартовая позиция кареток в шагах
         self.step_length = step_length
-        self.vel = std_v    # Если не дано в команде, то берётся предыдущая
+        self.vel = std_v  # Если не дано в команде, то берётся предыдущая
         self.vel_ext = std_v_ext
-        self.ext_pos = 0    # Начальная позиция движка экструдера
+        self.ext_pos = 0  # Начальная позиция движка экструдера
+
+        self._transform = False
 
     def cars_from_pos(self, x, y, z):
         """
@@ -40,12 +47,22 @@ class Tower:
         :param z:
         :return: в миллиметрах
         """
-        root1 = math.sqrt(self._TH2 - (-self._TABLE_WIDTH / 2 - (y - self._PPsqrt2)) ** 2 - (z - self._EXTRUDER_HEIGHT) ** 2)
-        root2 = math.sqrt(self._TH2 - (self._TABLE_WIDTH / 2 - (y + self._PPsqrt2)) ** 2 - (z - self._EXTRUDER_HEIGHT) ** 2)
+        root1 = math.sqrt(
+            self._TH2 - (-self._TABLE_WIDTH / 2 - (y - self._PPsqrt2)) ** 2 - (z - self._EXTRUDER_HEIGHT) ** 2)
+        root2 = math.sqrt(
+            self._TH2 - (self._TABLE_WIDTH / 2 - (y + self._PPsqrt2)) ** 2 - (z - self._EXTRUDER_HEIGHT) ** 2)
         return (x - self._PPsqrt2 - root1,
                 x + self._PPsqrt2 + root1,
                 x + self._PPsqrt2 + root2,
                 x - self._PPsqrt2 - root2)
+
+    # def set_zero(self, x, y):
+    #     self.x = x
+    #     self.y = y
+
+    def set_ext_pos(self, command):
+        self.ext_pos = command['E'] if command.get('E') is not None else 0  # херня с нулём
+        return self.ext_pos
 
     def pos_from_cars(self, car_x, car_y, car_z, car_e):
         """
@@ -59,10 +76,10 @@ class Tower:
         x = (car_x + car_y) / 2
         delta_xy = math.fabs(car_x - car_y) / 2
         delta_ze = math.fabs(car_z - car_e) / 2
-        y = ((delta_xy - self._PPsqrt2)**2 - (delta_ze - self._PPsqrt2)**2) /\
+        y = ((delta_xy - self._PPsqrt2) ** 2 - (delta_ze - self._PPsqrt2) ** 2) / \
             (4 * self._PPsqrt2 - 2 * self._TABLE_WIDTH)
         z = self._EXTRUDER_HEIGHT + math.sqrt(
-            self._TH2 - (delta_xy - self._PPsqrt2)**2 - (-self._TABLE_WIDTH / 2 - y + self._PPsqrt2)**2)
+            self._TH2 - (delta_xy - self._PPsqrt2) ** 2 - (-self._TABLE_WIDTH / 2 - y + self._PPsqrt2) ** 2)
         return x, y, z
 
     def move_to(self, command):
@@ -70,22 +87,22 @@ class Tower:
         :param command:
         :return:
         """
-
         self.vel = command['F'] / 60 if command.get('F') is not None else self.vel
+        if self.vel > 40:
+            self.vel = 40
 
-        _, _, Z = self.pos_from_cars(car_x=-290, car_y=290, car_z=290, car_e=-290)
         # деление отрезка из считанной строки на интервалы
         dx = command['X'] - self.x if command.get('X') is not None else 0
         dy = command['Y'] - self.y if command.get('Y') is not None else 0
-        dz = (Z - command['Z']) - self.z if command.get('Z') is not None else 0
+        dz = command['Z'] - self.z if command.get('Z') is not None else 0
 
-        num_del = round(math.sqrt(dy**2 + dz**2) / self.step_length)
+        num_del = round(math.sqrt(dy ** 2 + dz ** 2) / self.step_length)
         if num_del == 0:
             num_del = 1  # если округл. число микро шагов = 0, то значит, у нас будет 1 шаг
 
-        full_length = math.sqrt(dx**2 + dy**2 + dz**2)
+        full_length = math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
 
-        if full_length == 0:    # g1 без движения не обрабатывается или если движемся в точку в которой уже стоим
+        if full_length == 0:  # g1 без движения не обрабатывается или если движемся в точку в которой уже стоим
             return
 
         real_step_length = full_length / num_del
@@ -114,9 +131,9 @@ class Tower:
             target_z = self.z + mini_dz
             ext_target = self.ext_pos + ext_micro_step
 
-            car1_x, car1_y, car1_z, car1_e = [j for j in map(lambda length: length / self._ONE_STEP ,
+            car1_x, car1_y, car1_z, car1_e = [j for j in map(lambda length: length / self._ONE_STEP,
                                                              self.cars_from_pos(self.x, self.y, self.z))]
-            car2_x, car2_y, car2_z, car2_e = [j for j in map(lambda length: length / self._ONE_STEP ,
+            car2_x, car2_y, car2_z, car2_e = [j for j in map(lambda length: length / self._ONE_STEP,
                                                              self.cars_from_pos(target_x, target_y, target_z))]
 
             car_speed_x = (car2_x - car1_x) / time_for_step
@@ -138,15 +155,14 @@ class Tower:
 
             data_pack = ()
             if command['cmd'] == 'G1':
-                data_pack = (Commands['g1'], car2_x, car2_y, car2_z, car2_e,
+                data_pack = (Commands['G1'], car2_x, car2_y, car2_z, car2_e,
                              car_speed_x, car_speed_y, car_speed_z, car_speed_e,
-                             round(ext_target / self._ONE_STEP), round(math.fabs(self.vel_ext / self._ONE_STEP), 2))
+                             round(ext_target / self._ONE_EXTR_STEP),
+                             round(math.fabs(self.vel_ext / self._ONE_EXTR_STEP), 2))
 
             elif command['cmd'] == 'G0':
-                data_pack = (Commands['g0'], car2_x, car2_y, car2_z, car2_e,
+                data_pack = (Commands['G0'], car2_x, car2_y, car2_z, car2_e,
                              car_speed_x, car_speed_y, car_speed_z, car_speed_e)
-
-            yield data_pack
 
             self.x = target_x
             self.y = target_y
@@ -154,3 +170,13 @@ class Tower:
 
             self.ext_pos = ext_target
 
+            yield data_pack
+
+    def relative_move_to(self, port, x=0, y=0, z=0):
+        command = {'cmd': 'G0'}
+        command['X'] = x + self.x
+        command['Y'] = y + self.y
+        command['Z'] = z + self.z
+        for command_for_port in self.move_to(command):
+            port.send(*command_for_port)
+            tmp = port.get()
