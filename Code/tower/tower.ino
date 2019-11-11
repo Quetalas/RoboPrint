@@ -7,11 +7,14 @@
 #include "temperature.h"
 #include "connection.h"
 #include "moving_stepper.h"
+#include "touch_sensor.h"
 
-enum commands {G0=0, G1=1, ECHO=2, GET_TEMP=3, SET_TEMP=4, HEAT=5};
+enum commands {G0=0, G1=1, ECHO=2, GET_TEMP=3, SET_TEMP=4, HEAT=5, G92=7, G28=8,
+                PROBE_UP = 9, PROBE_DOWN = 10, IS_TOUCHED = 11}; //, G28=8,  6  пусто
 
 void setup() {
   Connection::begin();
+
   
   init_stepper(stepper_x, X_ENABLE_PIN, round(-293 / ONE_STEP), true);
   init_stepper(stepper_y, Y_ENABLE_PIN, round(293/ONE_STEP), false);
@@ -41,6 +44,7 @@ void loop() {
           break;
        case GET_TEMP:
           Connection::send_pack(String(heater.calculate_temp()));
+//          Connection::send_pack(heater.calculate_temp());
           break;
       case SET_TEMP:
           heater.set_temp(Connection::getNextData().toFloat());
@@ -50,6 +54,30 @@ void loop() {
           heater.heating();
           Connection::send_pack("0");
           break;
+      case G92:
+          set_ext_pos();
+          Connection::send_pack("0");
+          break;
+      case G28:
+          autohome_calibrtion(); 
+          Connection::send_pack("0");
+          break;
+      case IS_TOUCHED:              
+          if (touchProbe.isTouched()){
+            Connection::send_pack("y");
+          }
+          else {
+            Connection::send_pack("n");
+          }
+          break;
+      case PROBE_UP:
+          touchProbe.up();
+          Connection::send_pack("0");
+          break;
+      case PROBE_DOWN:
+          touchProbe.down();
+          Connection::send_pack("0");
+          break;        
     }
   }
 }

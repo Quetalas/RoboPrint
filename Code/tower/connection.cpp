@@ -17,6 +17,7 @@ String Connection::data_pack = "";
 uint16_t Connection::last_position = 0;
 
 void Connection::begin(const unsigned long& speed=115200) {
+//void Connection::begin(const unsigned long& speed=9600) {
   Serial.setTimeout(1000);  // 1 секунда
   Serial.begin(speed);
 }
@@ -79,9 +80,6 @@ void Connection::listen() {
     }
     if(Serial.find('{')) {
       while(true) {
-        if(WITH_HEATING) {
-          heater.control_temp();
-        }
         if (Serial.available()) {
           next_byte = Serial.read();
           if(next_byte != '}') {
@@ -99,7 +97,7 @@ void Connection::listen() {
 void Connection::send_pack(const String& pack) {
   while(true) {
     if(Serial.availableForWrite() >= (pack.length() + 2)) {
-      Serial.print("{" + pack + "}");
+      Serial.println("{" + pack + "}");
       return;
     }
   }

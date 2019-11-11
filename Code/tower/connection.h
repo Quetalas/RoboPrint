@@ -8,6 +8,7 @@ class Connection {
   
   public:
     static void begin(const unsigned long& baud_rate=115200);
+    //static void begin(const unsigned long& baud_rate=9600);
     static String getDataPack();    
     static int packLen();
     static String getNextData();    

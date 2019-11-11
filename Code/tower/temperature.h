@@ -7,8 +7,7 @@
 #define coef 3950 //для термистора NTC
 #define NOMINAL_RTH 100000 //thermisor EPCOS 100k is used
 
-#define DELTA_T 5 // амплитуда изменения температуры без регулировки
-#define pwm_to_temperature 50
+#define DELTA_T 2 // амплитуда изменения температуры без регулировки
 
 #define WITH_HEATING true
 
@@ -22,7 +21,7 @@ class Heater {
     
     void heating() const;
     
-    float control_temp() const;
+    float control_temp();
 
     float get_current_temp() const;
     
@@ -30,6 +29,7 @@ class Heater {
     float target_temp;
     int8_t min_temp;
     float current_temp;
+    int current_PWM;
 };
 
 extern Heater heater;
